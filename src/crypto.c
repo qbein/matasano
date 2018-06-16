@@ -1,3 +1,6 @@
+#include <string.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
 #include "crypto.h"
 
 void* safe_malloc(size_t size) {
@@ -11,7 +14,7 @@ void* safe_malloc(size_t size) {
 }
 
 Bytes_t create_bytes(size_t size) {
-    struct Bytes_t bytes = { 0, size, (unsigned char*)safe_malloc(size) };
+    struct Bytes_t bytes = { 0, size, (char*)safe_malloc(size) };
     return bytes;
 }
 
@@ -22,4 +25,20 @@ void set_bytes_from_hex(char* hex, Bytes_t *bytes) {
         char byteAsHex[3] = { *ptr, *(ptr+1), '\0' };
         bytes->bytes[bytes->length++] = strtol(byteAsHex, NULL, 16);
     }
+}
+
+void base64_encode(Bytes_t *bytes, char *encoded) {
+    BIO *b64 = BIO_new(BIO_f_base64());
+    BIO *mem = BIO_new(BIO_s_mem());
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    BIO_push(b64, mem);
+    BIO_write(b64, bytes->bytes, bytes->length);
+    BIO_flush(b64);
+
+    char *output;
+    int outputlen = BIO_get_mem_data(mem, &output);
+
+    strncpy(encoded, output, outputlen);
+
+    BIO_free_all(b64);
 }
