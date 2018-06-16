@@ -1,6 +1,8 @@
 #include <string.h>
+#include <stdio.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <assert.h>
 #include "crypto.h"
 
 void* safe_malloc(size_t size) {
@@ -15,16 +17,35 @@ void* safe_malloc(size_t size) {
 
 Bytes_t create_bytes(size_t size) {
     struct Bytes_t bytes = { 0, size, (char*)safe_malloc(size) };
+    memset(bytes.bytes, 0, bytes.allocLength);
     return bytes;
 }
 
-void set_bytes_from_hex(char* hex, Bytes_t *bytes) {
+void free_bytes(Bytes_t *bytes) {
+    free(bytes->bytes);
+}
+
+void bytes_from_hex(char* hex, Bytes_t *bytes) {
     char *ptr;
     bytes->length = 0;
     for(ptr = hex; *ptr != '\0'; ptr+=2) {
         char byteAsHex[3] = { *ptr, *(ptr+1), '\0' };
         bytes->bytes[bytes->length++] = strtol(byteAsHex, NULL, 16);
     }
+}
+
+void hex_from_bytes(Bytes_t *input, char *hex) {
+    for(int i=0; i<input->length; i++) {
+        sprintf(&hex[i*2], "%x", (int)input->bytes[i]);
+    }
+}
+
+void xor_encrypt(Bytes_t *input, Bytes_t *xor, Bytes_t *output) {
+    assert(input->allocLength == output->allocLength);
+    for(int i=0; i<input->length; i++) {
+        output->bytes[i] = input->bytes[i]^xor->bytes[i%xor->length];
+    }
+    output->length = input->length;
 }
 
 void base64_encode(Bytes_t *bytes, char *encoded) {

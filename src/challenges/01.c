@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <string.h>
-#include "crypto.h"
-#include "assert.h"
+#include "../crypto.h"
+#include "../assert.h"
 
 /*
 Convert hex to base64
+
+http://cryptopals.com/sets/1/challenges/1
 
 The string:
 49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d
@@ -23,7 +25,7 @@ int main(int argc, char **argv) {
     char input[] = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
 
     struct Bytes_t bytes = create_bytes(1024);
-    set_bytes_from_hex(&input[0], &bytes);
+    bytes_from_hex(&input[0], &bytes);
 
     char encoded[1024];
     memset(&encoded[0], 0, 1024);
@@ -34,5 +36,5 @@ int main(int argc, char **argv) {
         encoded
         );
 
-    free(bytes.bytes);
+    free_bytes(&bytes);
 }

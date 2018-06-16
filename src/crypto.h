@@ -11,10 +11,16 @@ struct Bytes_t {
     char* bytes;
 } typedef Bytes_t;
 
-void set_bytes_from_hex(char *hex, Bytes_t *bytes);
+void bytes_from_hex(char *hex, Bytes_t *bytes);
+
+void hex_from_bytes(Bytes_t *input, char *hex);
 
 void base64_encode(Bytes_t *bytes, char *encoded);
+
+void xor_encrypt(Bytes_t *input, Bytes_t *xor, Bytes_t *output);
 
 void* safe_malloc(size_t size);
 
 Bytes_t create_bytes(size_t size);
+
+void free_bytes(Bytes_t *bytes);
