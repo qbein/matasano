@@ -18,14 +18,15 @@ int main(int argc, char **argv) {
     size_t len;
     char *line;
 
-    Char_cipher_t highscore = { 0, '\0' };
-    Char_cipher_t linescore = { 0, '\0' };
+    Char_cipher_t highscore = { 0, 0 };
+    Char_cipher_t linescore = { 0, 0 };
 
     Bytes_t highscore_bytes = create_bytes(1024);
     Bytes_t line_bytes = create_bytes(1024);
 
     while(((line = fgetln(fp, &len)))) {
-        if(line[len-1]=='\n') line[len-1]='\0';
+        if(line[len-1]==0x0a) line[len-1] = 0;
+        else line[len] = 0;
 
         bytes_from_hex(line, &line_bytes);
         linescore = find_xor_char(&line_bytes);
@@ -45,11 +46,8 @@ int main(int argc, char **argv) {
     Bytes_t output = create_bytes(1024);
     xor_char(&highscore_bytes, highscore.cipher, &output);
 
-    // Where does the newline come from?
-    if(output.bytes[output.length-1]=='\n') output.bytes[output.length-1]='\0';
-
     assert_equal(
-        "Now that the party is jumping",
+        "Now that the party is jumping\n",
         output.bytes
     );
 

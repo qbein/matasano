@@ -18,7 +18,7 @@ void* safe_malloc(size_t size) {
 
 Bytes_t create_bytes(size_t size) {
     struct Bytes_t bytes = { 0, size, (char*)safe_malloc(size) };
-    memset(bytes.bytes, 0, bytes.capacity);
+    memset(bytes.bytes, 0, size);
     return bytes;
 }
 
@@ -28,10 +28,10 @@ void free_bytes(Bytes_t *bytes) {
 
 void bytes_from_hex(char* hex, Bytes_t *bytes) {
     memset(bytes->bytes, 0, bytes->capacity);
-    char *ptr;
     bytes->length = 0;
-    for(ptr = hex; *ptr != '\0'; ptr+=2) {
-        char byteAsHex[3] = { *ptr, *(ptr+1), '\0' };
+    for(int i=0; i<bytes->capacity-3; i+=2) {
+        if(*(hex+i)==0||*(hex+i+1)==0) break;
+        char byteAsHex[3] = { *(hex+i), *(hex+i+1), 0 };
         bytes->bytes[bytes->length++] = strtol(byteAsHex, NULL, 16);
     }
 }
@@ -90,7 +90,7 @@ double letter_freq_score(Bytes_t *bytes) {
     double score = 0;
     for(int i=0; bytes->length; i++) {
         char letter = bytes->bytes[i];
-        if(letter == '\0') break;
+        if(letter == 0) break;
 
         if(letter == 0x20) {
             score += LetterFreq[SPACE];
@@ -142,7 +142,7 @@ double letter_freq_score(Bytes_t *bytes) {
 }
 
 Char_cipher_t find_xor_char(Bytes_t *bytes) {
-    struct Char_cipher_t highscore = { 0, '\0' };
+    struct Char_cipher_t highscore = { 0, 0 };
     Bytes_t output = create_bytes(bytes->capacity);
 
     for(int i=1; i<255; i++) {
