@@ -25,13 +25,13 @@ int main(int argc, char **argv) {
 
     struct Bytes_t input = create_bytes(1024);
     bytes_from_hex(&input_hex[0], &input);
-    char xor_char = find_xor_char(&input);
+    Char_cipher_t cipher = find_xor_char(&input);
     struct Bytes_t xor = create_bytes(1024);
-    bytes_from_char(xor_char, &xor);
+    bytes_from_char(cipher.cipher, &xor);
 
     struct Bytes_t output = create_bytes(1024);
 
-    xor_encrypt(&input, &xor, &output);
+    xor_bytes(&input, &xor, &output);
 
     assert_equal(
         output.bytes,

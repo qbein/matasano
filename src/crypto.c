@@ -27,6 +27,7 @@ void free_bytes(Bytes_t *bytes) {
 }
 
 void bytes_from_hex(char* hex, Bytes_t *bytes) {
+    memset(bytes->bytes, 0, bytes->capacity);
     char *ptr;
     bytes->length = 0;
     for(ptr = hex; *ptr != '\0'; ptr+=2) {
@@ -36,8 +37,16 @@ void bytes_from_hex(char* hex, Bytes_t *bytes) {
 }
 
 void bytes_from_char(char character, Bytes_t *bytes) {
+    memset(bytes->bytes, 0, bytes->capacity);
     bytes->bytes[0] = character;
     bytes->length = 1;
+}
+
+void copy_bytes(Bytes_t *src, Bytes_t *dest) {
+    assert(src->capacity == dest->capacity);
+    memset(dest->bytes, 0, dest->capacity);
+    dest->length = src->length;
+    memcpy(dest->bytes, src->bytes, src->length);
 }
 
 void hex_from_bytes(Bytes_t *input, char *hex) {
@@ -46,12 +55,19 @@ void hex_from_bytes(Bytes_t *input, char *hex) {
     }
 }
 
-void xor_encrypt(Bytes_t *input, Bytes_t *xor, Bytes_t *output) {
+void xor_bytes(Bytes_t *input, Bytes_t *xor, Bytes_t *output) {
     assert(input->capacity == output->capacity);
     for(int i=0; i<input->length; i++) {
         output->bytes[i] = input->bytes[i]^xor->bytes[i%xor->length];
     }
     output->length = input->length;
+}
+
+void xor_char(Bytes_t *input, char cipher, Bytes_t *output) {
+    Bytes_t cipher_bytes = create_bytes(1);
+    bytes_from_char(cipher, &cipher_bytes);
+    xor_bytes(input, &cipher_bytes, output);
+    free_bytes(&cipher_bytes);
 }
 
 void base64_encode(Bytes_t *bytes, char *encoded) {
@@ -70,7 +86,7 @@ void base64_encode(Bytes_t *bytes, char *encoded) {
     BIO_free_all(b64);
 }
 
-double str_letter_freq_score(Bytes_t *bytes) {
+double letter_freq_score(Bytes_t *bytes) {
     double score = 0;
     for(int i=0; bytes->length; i++) {
         char letter = bytes->bytes[i];
@@ -125,24 +141,21 @@ double str_letter_freq_score(Bytes_t *bytes) {
     return score;
 }
 
-char find_xor_char(Bytes_t *bytes) {
-    struct score {
-        double score;
-        char character;
-    };
-    struct score highscore = { 0, '\0' };
-    for(int i=1; i<255; i++) {
-        Bytes_t xor = create_bytes(1);
-        xor.length = 1;
-        xor.bytes[0] = (char)i;
-        Bytes_t output = create_bytes(bytes->capacity);
-        xor_encrypt(bytes, &xor, &output);
+Char_cipher_t find_xor_char(Bytes_t *bytes) {
+    struct Char_cipher_t highscore = { 0, '\0' };
+    Bytes_t output = create_bytes(bytes->capacity);
 
-        double s = str_letter_freq_score(&output);
+    for(int i=1; i<255; i++) {
+        xor_char(bytes, (char)i, &output);
+
+        double s = letter_freq_score(&output);
         if(s>highscore.score) {
             highscore.score = s;
-            highscore.character = (char)i;
+            highscore.cipher = (char)i;
         }
     }
-    return highscore.character;
+
+    free_bytes(&output);
+
+    return highscore;
 }
