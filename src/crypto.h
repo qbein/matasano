@@ -7,11 +7,13 @@ const BIO_METHOD *BIO_f_base64(void);
 
 struct Bytes_t {
     int length;
-    size_t allocLength;
+    size_t capacity;
     char* bytes;
 } typedef Bytes_t;
 
 void bytes_from_hex(char *hex, Bytes_t *bytes);
+
+void bytes_from_char(char character, Bytes_t *bytes);
 
 void hex_from_bytes(Bytes_t *input, char *hex);
 
@@ -24,3 +26,7 @@ void* safe_malloc(size_t size);
 Bytes_t create_bytes(size_t size);
 
 void free_bytes(Bytes_t *bytes);
+
+double str_letter_freq_score(Bytes_t *bytes);
+
+char find_xor_char(Bytes_t *bytes);

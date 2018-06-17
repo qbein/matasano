@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 
     struct Bytes_t output = create_bytes(1024);
     xor_encrypt(&input, &xor, &output);
-    
+
     char output_hex[1024];
     memset(output_hex, 0, 1024);
     hex_from_bytes(&output, &output_hex[0]);
