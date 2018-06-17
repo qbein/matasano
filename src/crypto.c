@@ -36,6 +36,15 @@ void bytes_from_hex(char* hex, Bytes_t *bytes) {
     }
 }
 
+void bytes_from_str(char *string, Bytes_t *bytes) {
+    memset(bytes->bytes, 0, bytes->capacity);
+    bytes->length = strlen(string);
+    if(bytes->length>bytes->capacity) {
+        bytes->length = bytes->capacity-1;
+    }
+    strncpy(bytes->bytes, string, bytes->length);
+}
+
 void bytes_from_char(char character, Bytes_t *bytes) {
     memset(bytes->bytes, 0, bytes->capacity);
     bytes->bytes[0] = character;
@@ -51,7 +60,7 @@ void copy_bytes(Bytes_t *src, Bytes_t *dest) {
 
 void hex_from_bytes(Bytes_t *input, char *hex) {
     for(int i=0; i<input->length; i++) {
-        sprintf(&hex[i*2], "%x", (int)input->bytes[i]);
+        sprintf(&hex[i*2], "%02x", (int)input->bytes[i]);
     }
 }
 
@@ -64,8 +73,14 @@ void xor_bytes(Bytes_t *input, Bytes_t *xor, Bytes_t *output) {
 }
 
 void xor_char(Bytes_t *input, char cipher, Bytes_t *output) {
-    Bytes_t cipher_bytes = create_bytes(1);
-    bytes_from_char(cipher, &cipher_bytes);
+    char cipher_str[] = { cipher, 0 };
+    xor_str(input, cipher_str, output);
+}
+
+void xor_str(Bytes_t *input, char cipher[], Bytes_t *output) {
+    size_t len = strlen(cipher);
+    Bytes_t cipher_bytes = create_bytes(len+1);
+    bytes_from_str(cipher, &cipher_bytes);
     xor_bytes(input, &cipher_bytes, output);
     free_bytes(&cipher_bytes);
 }

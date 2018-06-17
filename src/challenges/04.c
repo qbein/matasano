@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     Bytes_t highscore_bytes = create_bytes(1024);
     Bytes_t line_bytes = create_bytes(1024);
 
-    while(((line = fgetln(fp, &len)))) {
+    while(((line = fgetln(fp, &len))) != NULL) {
         if(line[len-1]==0x0a) line[len-1] = 0;
         else line[len] = 0;
 
