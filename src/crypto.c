@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <assert.h>
@@ -173,4 +174,22 @@ Char_cipher_t find_xor_char(Bytes_t *bytes) {
     free_bytes(&output);
 
     return highscore;
+}
+
+long hamming_distance(char *a, char *b) {
+    size_t size_a = strlen(a);
+    size_t size_b = strlen(b);
+    size_t len = size_a > size_b ? size_b : size_a;
+    // If strings differ in length, ass 8 bits for each missing letter
+    long distance = (size_a > size_b ? size_a - size_b : size_b - size_a)*8;
+    for(int i=0; i<len; i++) {
+        int byte_a = (int)a[i];
+        int byte_b = (int)b[i];
+        for(int j=0; j<8; j++) {
+            if((byte_a&1) != (byte_b&1)) distance++;
+            byte_a >>= 1;
+            byte_b >>= 1;
+        }
+    }
+    return distance;
 }

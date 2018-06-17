@@ -34,6 +34,8 @@ void xor_char(Bytes_t *input, char cipher, Bytes_t *output);
 
 void xor_str(Bytes_t *input, char cipher[], Bytes_t *output);
 
+long hamming_distance(char *a, char *b);
+
 void* safe_malloc(size_t size);
 
 Bytes_t create_bytes(size_t size);
