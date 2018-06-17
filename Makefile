@@ -1,22 +1,27 @@
-bin/challenges/01: ./lib/OpenSSL bin/challenges
-	$(CC) -Wall ./src/challenges/01.c ./src/crypto.c -Llib -lcrypto -lssl -o bin/challenges/01
+LIBS := -lcrypto -lssl
+CFLAGS := -Wall
 
-bin/challenges/02: ./lib/OpenSSL bin/challenges
-	$(CC) -Wall ./src/challenges/02.c ./src/crypto.c -Llib -lcrypto -lssl -o bin/challenges/02
+CHALSRCDIR := src/challenges
+CHALBINDIR := bin/challenges
+CHALSRC := $(wildcard $(CHALSRCDIR)/*.c)
+CHALOBJ := $(CHALSRC:$(CHALSRCDIR)/%.c=$(CHALBINDIR)/%)
 
-test_challenge_01: clean bin/challenges/01
-	./bin/challenges/01
+bin/challenges/%: ./lib/OpenSSL bin/challenges
+	$(CC) $(CFLAGS) ./$(CHALSRCDIR)/$*.c ./src/crypto.c -Llib $(LIBS) -o $@
 
-test_challenge_02: clean bin/challenges/02
-	./bin/challenges/02
+test_%: bin/challenges/%
+	./$(CHALBINDIR)/$*
 
-tests: test_challenge_01 test_challenge_02
+all: $(CHALOBJ)
+
+tests: all
+	$(foreach var,$(CHALOBJ),./$(var);)
 
 ./lib/OpenSSL:
 	./build_openssl.sh
 
 bin/challenges:
-	mkdir -p bin/challenges
+	mkdir -p $(CHALBINDIR)
 
 clean:
 	rm -rf ./bin
