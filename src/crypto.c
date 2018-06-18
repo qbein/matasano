@@ -17,17 +17,17 @@ void* safe_malloc(size_t size) {
     return buffer;
 }
 
-Bytes_t create_bytes(size_t size) {
-    struct Bytes_t bytes = { 0, size, (char*)safe_malloc(size) };
+ByteBuffer create_bytes(size_t size) {
+    ByteBuffer bytes = { 0, size, (char*)safe_malloc(size) };
     memset(bytes.bytes, 0, size);
     return bytes;
 }
 
-void free_bytes(Bytes_t *bytes) {
+void free_bytes(ByteBuffer *bytes) {
     free(bytes->bytes);
 }
 
-void bytes_from_hex(char* hex, Bytes_t *bytes) {
+void bytes_from_hex(char* hex, ByteBuffer *bytes) {
     memset(bytes->bytes, 0, bytes->capacity);
     bytes->length = 0;
     for(int i=0; i<bytes->capacity-3; i+=2) {
@@ -37,7 +37,7 @@ void bytes_from_hex(char* hex, Bytes_t *bytes) {
     }
 }
 
-void bytes_from_str(char *string, Bytes_t *bytes) {
+void bytes_from_str(char *string, ByteBuffer *bytes) {
     memset(bytes->bytes, 0, bytes->capacity);
     bytes->length = strlen(string);
     if(bytes->length>bytes->capacity) {
@@ -46,47 +46,45 @@ void bytes_from_str(char *string, Bytes_t *bytes) {
     strncpy(bytes->bytes, string, bytes->length);
 }
 
-void bytes_from_char(char character, Bytes_t *bytes) {
+void bytes_from_char(char character, ByteBuffer *bytes) {
     memset(bytes->bytes, 0, bytes->capacity);
     bytes->bytes[0] = character;
     bytes->length = 1;
 }
 
-void copy_bytes(Bytes_t *src, Bytes_t *dest) {
+void bytes_copy_to(ByteBuffer *src, ByteBuffer *dest) {
     assert(src->capacity == dest->capacity);
     memset(dest->bytes, 0, dest->capacity);
     dest->length = src->length;
     memcpy(dest->bytes, src->bytes, src->length);
 }
 
-void hex_from_bytes(Bytes_t *input, char *hex) {
+void hex_from_bytes(ByteBuffer *input, char *hex) {
     for(int i=0; i<input->length; i++) {
         sprintf(&hex[i*2], "%02x", (int)input->bytes[i]);
     }
 }
 
-void xor_bytes(Bytes_t *input, Bytes_t *xor, Bytes_t *output) {
-    assert(input->capacity == output->capacity);
+void xor_bytes(ByteBuffer *input, ByteBuffer *xor) {
     for(int i=0; i<input->length; i++) {
-        output->bytes[i] = input->bytes[i]^xor->bytes[i%xor->length];
+        input->bytes[i] = input->bytes[i]^xor->bytes[i%xor->length];
     }
-    output->length = input->length;
 }
 
-void xor_char(Bytes_t *input, char cipher, Bytes_t *output) {
+void xor_char(ByteBuffer *input, char cipher) {
     char cipher_str[] = { cipher, 0 };
-    xor_str(input, cipher_str, output);
+    xor_str(input, cipher_str);
 }
 
-void xor_str(Bytes_t *input, char cipher[], Bytes_t *output) {
+void xor_str(ByteBuffer *input, char cipher[]) {
     size_t len = strlen(cipher);
-    Bytes_t cipher_bytes = create_bytes(len+1);
+    ByteBuffer cipher_bytes = create_bytes(len+1);
     bytes_from_str(cipher, &cipher_bytes);
-    xor_bytes(input, &cipher_bytes, output);
+    xor_bytes(input, &cipher_bytes);
     free_bytes(&cipher_bytes);
 }
 
-void base64_encode(Bytes_t *bytes, char *encoded) {
+void base64_encode_bytes( ByteBuffer *bytes, char *encoded) {
     BIO *b64 = BIO_new(BIO_f_base64());
     BIO *mem = BIO_new(BIO_s_mem());
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -102,7 +100,7 @@ void base64_encode(Bytes_t *bytes, char *encoded) {
     BIO_free_all(b64);
 }
 
-double letter_freq_score(Bytes_t *bytes) {
+double score_bytes(ByteBuffer *bytes) {
     double score = 0;
     for(int i=0; bytes->length; i++) {
         char letter = bytes->bytes[i];
@@ -157,21 +155,22 @@ double letter_freq_score(Bytes_t *bytes) {
     return score;
 }
 
-Char_cipher_t find_xor_char(Bytes_t *bytes) {
-    struct Char_cipher_t highscore = { 0, 0 };
-    Bytes_t output = create_bytes(bytes->capacity);
+CharCipher find_xor_char(ByteBuffer *bytes) {
+    CharCipher highscore = { 0, 0 };
+    ByteBuffer tmp = create_bytes(bytes->capacity);
 
     for(int i=1; i<255; i++) {
-        xor_char(bytes, (char)i, &output);
+        bytes_copy_to(bytes, &tmp);
+        xor_char(&tmp, (char)i);
 
-        double s = letter_freq_score(&output);
+        double s = score_bytes(&tmp);
         if(s>highscore.score) {
             highscore.score = s;
             highscore.cipher = (char)i;
         }
     }
 
-    free_bytes(&output);
+    free_bytes(&tmp);
 
     return highscore;
 }

@@ -3,45 +3,45 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
-const BIO_METHOD *BIO_f_base64(void);
-
-struct Bytes_t {
+typedef struct ByteBuffer {
     int length;
     size_t capacity;
     char* bytes;
-} typedef Bytes_t;
+} ByteBuffer;
 
-struct Char_cipher_t {
+typedef struct CharCipher {
     double score;
     char cipher;
-} typedef Char_cipher_t;
+} CharCipher;
 
-void bytes_from_hex(char *hex, Bytes_t *bytes);
+void bytes_from_hex(char *hex, ByteBuffer *bytes);
 
-void bytes_from_char(char character, Bytes_t *bytes);
+void bytes_from_char(char character, ByteBuffer *bytes);
 
-void bytes_from_str(char *character, Bytes_t *bytes);
+void bytes_from_str(char *character, ByteBuffer *bytes);
 
-void copy_bytes(Bytes_t *src, Bytes_t *dest);
+void bytes_copy_to(ByteBuffer *src, ByteBuffer *dest);
 
-void hex_from_bytes(Bytes_t *input, char *hex);
+void hex_from_bytes(ByteBuffer *input, char *hex);
 
-void base64_encode(Bytes_t *bytes, char *encoded);
+void base64_encode_bytes(ByteBuffer *bytes, char *encoded);
 
-void xor_bytes(Bytes_t *input, Bytes_t *xor, Bytes_t *output);
+void xor_bytes(ByteBuffer *input, ByteBuffer *xor);
 
-void xor_char(Bytes_t *input, char cipher, Bytes_t *output);
+void xor_char(ByteBuffer *input, char cipher);
 
-void xor_str(Bytes_t *input, char cipher[], Bytes_t *output);
+void xor_str(ByteBuffer *input, char cipher[]);
 
 long hamming_distance(char *a, char *b);
 
 void* safe_malloc(size_t size);
 
-Bytes_t create_bytes(size_t size);
+ByteBuffer create_bytes(size_t size);
 
-void free_bytes(Bytes_t *bytes);
+void free_bytes(ByteBuffer *bytes);
 
-double letter_freq_score(Bytes_t *bytes);
+double score_bytes(ByteBuffer *bytes);
 
-Char_cipher_t find_xor_char(Bytes_t *bytes);
+CharCipher find_xor_char(ByteBuffer *bytes);
+
+void find_xor_key(ByteBuffer *bytes, char *key);

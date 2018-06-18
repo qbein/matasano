@@ -18,11 +18,11 @@ int main(int argc, char **argv) {
     size_t len;
     char *line;
 
-    Char_cipher_t highscore = { 0, 0 };
-    Char_cipher_t linescore = { 0, 0 };
+    CharCipher highscore = { 0, 0 };
+    CharCipher linescore = { 0, 0 };
 
-    Bytes_t highscore_bytes = create_bytes(1024);
-    Bytes_t line_bytes = create_bytes(1024);
+    ByteBuffer highscore_bytes = create_bytes(1024);
+    ByteBuffer line_bytes = create_bytes(1024);
 
     while(((line = fgetln(fp, &len))) != NULL) {
         if(line[len-1]==0x0a) line[len-1] = 0;
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
         linescore = find_xor_char(&line_bytes);
 
         if(linescore.score > highscore.score) {
-            copy_bytes(&line_bytes, &highscore_bytes);
+            bytes_copy_to(&line_bytes, &highscore_bytes);
 
             highscore.cipher = linescore.cipher;
             highscore.score = linescore.score;
@@ -40,19 +40,16 @@ int main(int argc, char **argv) {
     }
 
     fclose(fp);
+    free_bytes(&line_bytes);
 
     printf("Found cipher: %c (score: %f)\n", highscore.cipher, highscore.score);
 
-    Bytes_t output = create_bytes(1024);
-    xor_char(&highscore_bytes, highscore.cipher, &output);
+    xor_char(&highscore_bytes, highscore.cipher);
 
     assert_equal(
         "Now that the party is jumping\n",
-        output.bytes
+        highscore_bytes.bytes
     );
 
-    free_bytes(&output);
-
-    free_bytes(&line_bytes);
     free_bytes(&highscore_bytes);
 }
