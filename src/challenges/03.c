@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     ByteBuffer data = create_bytes(1024);
     bytes_from_hex(&data_hex[0], &data);
 
-    CharCipher cipher = find_xor_char(&data);
+    CharCipher cipher = find_xor_char(&data, 0);
 
     xor_char(&data, cipher.cipher);
 

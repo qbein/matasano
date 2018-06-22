@@ -1,5 +1,5 @@
 LIBS := -lcrypto -lssl
-CFLAGS := -Wall
+CFLAGS := -Wall -std=c99
 
 CHALSRCDIR := src/challenges
 CHALBINDIR := bin/challenges

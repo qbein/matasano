@@ -27,12 +27,19 @@ int main(int argc, char **argv) {
     ByteBuffer bytes = create_bytes(1024);
     bytes_from_hex(&input[0], &bytes);
 
-    char encoded[1024] = {0};
-    base64_encode_bytes(&bytes, &encoded[0]);
+    ByteBuffer encoded = create_bytes(1024);
+    base64_encode_bytes(&bytes, &encoded);
+
+    bytes.length = 0;
+    memset(&bytes.bytes[0], 0, bytes.capacity);
+
+    printf("encoded: ->%s<-\n", encoded.bytes);
+    base64_decode_bytes(&encoded, &bytes);
+    printf("decoded: ->%s<-\n", bytes.bytes);
 
     assert_equal(
         "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t",
-        encoded
+        encoded.bytes
         );
 
     free_bytes(&bytes);

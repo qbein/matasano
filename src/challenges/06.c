@@ -13,8 +13,8 @@ coding. The other challenges in this set are there to bring you up to speed.
 This one is there to qualify you. If you can do this one, you're probably just
 fine up to Set 6.
 
-There's a file here. It's been base64'd after being encrypted with
-repeating-key XOR.
+There's a file here (assets/6.txt). It's been base64'd after being encrypted
+with repeating-key XOR.
 
 Decrypt it.
 
@@ -23,13 +23,8 @@ Here's how:
 1. Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
 2. Write a function to compute the edit distance/Hamming distance between two
    strings. The Hamming distance is just the number of differing bits. The
-   distance between:
-
-   this is a test
-   and
-   wokka wokka!!!
-
-   is 37. Make sure your code agrees before you proceed.
+   distance between: `this is a test` and `wokka wokka!!!` is 37. Make sure
+   your code agrees before you proceed.
 3. For each KEYSIZE, take the first KEYSIZE worth of bytes, and the second
    KEYSIZE worth of bytes, and find the edit distance between them. Normalize
    this result by dividing by KEYSIZE.
@@ -57,10 +52,28 @@ ones. We promise, there aren't any blatant errors in this text. In particular:
 the "wokka wokka!!!" edit distance really is 37.
 */
 int main(int argc, char **argv) {
-    assert(hamming_distance("this is a test", "wokka wokka!!!")==37);
+    assert(hamming_distance("this is a test", 14, "wokka wokka!!!", 14)==37);
+
+    ByteBuffer encoded = create_bytes(1024);
+    bytes_from_file("assets/6.txt", &encoded);
+
+    ByteBuffer bytes = create_bytes(1024);
+    base64_decode_bytes(&encoded, &bytes);
+
+    int keysize = find_keysize(&bytes, 0);
+    assert(keysize==29);
+
+    char *key = find_xor_key(&bytes);
 
     assert_equal(
-        "not implemented",
-        ""
+        "Terminator X: Bring the noise",
+        key
     );
+
+    xor_str(&bytes, key);
+
+    bytes.bytes[128] = 0;
+    printf("  -> First 128 decoded characters:\n%s...\n", bytes.bytes);
+
+    free(key);
 }

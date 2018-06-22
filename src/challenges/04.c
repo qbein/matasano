@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
         else line[len] = 0;
 
         bytes_from_hex(line, &line_bytes);
-        linescore = find_xor_char(&line_bytes);
+        linescore = find_xor_char(&line_bytes, 0);
 
         if(linescore.score > highscore.score) {
             bytes_copy_to(&line_bytes, &highscore_bytes);

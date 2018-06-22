@@ -28,7 +28,7 @@ enum Letters {
     Z
 };
 
-static double LetterFreq[] = {
+static float LetterFreq[] = {
     15,
     12.702,
     9.056,
