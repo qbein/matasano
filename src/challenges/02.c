@@ -24,16 +24,12 @@ int main(int argc, char **argv) {
     char data_hex[] = "1c0111001f010100061a024b53535009181c";
     char xor_hex[] = "686974207468652062756c6c277320657965";
 
-    ByteBuffer data = create_bytes(1024);
-    bytes_from_hex(&data_hex[0], &data);
+    ByteBuffer data = bytes_from_hex(&data_hex[0]);
+    ByteBuffer xor = bytes_from_hex(&xor_hex[0]);
 
-    ByteBuffer xor = create_bytes(1024);
-    bytes_from_hex(&xor_hex[0], &xor);
+    xor_bytes(&data, xor);
 
-    xor_bytes(&data, &xor);
-
-    char output_hex[1024] = {0};
-    hex_from_bytes(&data, &output_hex[0]);
+    char *output_hex = hex_from_bytes(data);
 
     assert_equal(
         "746865206b696420646f6e277420706c6179",
@@ -42,4 +38,5 @@ int main(int argc, char **argv) {
 
     free_bytes(&data);
     free_bytes(&xor);
+    free(output_hex);
 }

@@ -24,18 +24,16 @@ for pretty-printing.
 int main(int argc, char **argv) {
     char input[] = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
 
-    ByteBuffer bytes = create_bytes(1024);
-    bytes_from_hex(&input[0], &bytes);
-
-    ByteBuffer encoded = create_bytes(1024);
-    base64_encode_bytes(&bytes, &encoded);
+    ByteBuffer bytes = bytes_from_hex(&input[0]);
+    printf("hex: %s\n", bytes.bytes);
+    ByteBuffer encoded = base64_encode_bytes(&bytes);
 
     bytes.length = 0;
-    memset(&bytes.bytes[0], 0, bytes.capacity);
+    memset(bytes.bytes, 0, bytes.capacity);
 
     printf("encoded: ->%s<-\n", encoded.bytes);
-    base64_decode_bytes(&encoded, &bytes);
-    printf("decoded: ->%s<-\n", bytes.bytes);
+    ByteBuffer decoded = base64_decode_bytes(&encoded);
+    printf("decoded: ->%s<-\n", decoded.bytes);
 
     assert_equal(
         "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t",
@@ -43,4 +41,6 @@ int main(int argc, char **argv) {
         );
 
     free_bytes(&bytes);
+    free_bytes(&encoded);
+    free_bytes(&decoded);
 }

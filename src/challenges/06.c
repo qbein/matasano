@@ -54,16 +54,13 @@ the "wokka wokka!!!" edit distance really is 37.
 int main(int argc, char **argv) {
     assert(hamming_distance("this is a test", 14, "wokka wokka!!!", 14)==37);
 
-    ByteBuffer encoded = create_bytes(1024);
-    bytes_from_file("assets/6.txt", &encoded);
+    ByteBuffer encoded = bytes_from_file("assets/6.txt");
+    ByteBuffer bytes = base64_decode_bytes(&encoded);
 
-    ByteBuffer bytes = create_bytes(1024);
-    base64_decode_bytes(&encoded, &bytes);
-
-    int keysize = find_keysize(&bytes, 0);
+    int keysize = find_keysize(bytes, 0);
     assert(keysize==29);
 
-    char *key = find_xor_key(&bytes);
+    char *key = find_xor_key(bytes);
 
     assert_equal(
         "Terminator X: Bring the noise",
@@ -72,6 +69,7 @@ int main(int argc, char **argv) {
 
     xor_str(&bytes, key);
 
+    // Print only the first 128 chars..
     bytes.bytes[128] = 0;
     printf("  -> First 128 decoded characters:\n%s...\n", bytes.bytes);
 

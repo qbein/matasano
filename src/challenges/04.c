@@ -21,26 +21,24 @@ int main(int argc, char **argv) {
     CharCipher highscore = { 0, 0 };
     CharCipher linescore = { 0, 0 };
 
-    ByteBuffer highscore_bytes = create_bytes(1024);
-    ByteBuffer line_bytes = create_bytes(1024);
+    ByteBuffer highscore_bytes;
+    ByteBuffer line_bytes;
 
     while(((line = fgetln(fp, &len))) != NULL) {
         if(line[len-1]==0x0a) line[len-1] = 0;
         else line[len] = 0;
 
-        bytes_from_hex(line, &line_bytes);
-        linescore = find_xor_char(&line_bytes, 0);
+        line_bytes = bytes_from_hex(line);
+        linescore = find_xor_char(line_bytes, 0);
 
         if(linescore.score > highscore.score) {
-            bytes_copy_to(&line_bytes, &highscore_bytes);
-
+            highscore_bytes = line_bytes;
             highscore.cipher = linescore.cipher;
             highscore.score = linescore.score;
         }
     }
 
     fclose(fp);
-    free_bytes(&line_bytes);
 
     printf("Found cipher: %c (score: %f)\n", highscore.cipher, highscore.score);
 

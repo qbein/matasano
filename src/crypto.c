@@ -43,61 +43,69 @@ void free_bytes(ByteBuffer *bytes) {
     free(bytes->bytes);
 }
 
-void bytes_from_hex(char* hex, ByteBuffer *bytes) {
-    memset(bytes->bytes, 0, bytes->capacity);
-    bytes->length = 0;
-    for(int i=0; i<bytes->capacity-3; i+=2) {
-        if(*(hex+i)==0||*(hex+i+1)==0) break;
-        char byteAsHex[3] = { *(hex+i), *(hex+i+1), 0 };
-        bytes->bytes[bytes->length++] = strtol(byteAsHex, NULL, 16);
+ByteBuffer bytes_from_hex(char *hex) {
+    ByteBuffer bytes = create_bytes(strlen(hex)/2+1);
+
+    for(int i=0; i<bytes.capacity; i++) {
+        if(*(hex+i*2)==0||*(hex+i+1*2)==0) break;
+        char byteAsHex[3] = { *(hex+i*2), *(hex+i*2+1), 0 };
+        bytes.bytes[bytes.length++] = strtol(byteAsHex, NULL, 16);
     }
+
+    return bytes;
 }
 
-void bytes_from_str(char *string, ByteBuffer *bytes) {
-    memset(bytes->bytes, 0, bytes->capacity);
-    bytes->length = strlen(string);
-    if(bytes->length>bytes->capacity) {
-        bytes->length = bytes->capacity-1;
-    }
-    strncpy(bytes->bytes, string, bytes->length);
+ByteBuffer bytes_from_str(char *str) {
+    ByteBuffer bytes = create_bytes(strlen(str)+1);
+    bytes.length = bytes.capacity-1;
+    strncpy(bytes.bytes, str, bytes.length);
+    return bytes;
 }
 
-void bytes_from_char(char character, ByteBuffer *bytes) {
-    memset(bytes->bytes, 0, bytes->capacity);
-    bytes->bytes[0] = character;
-    bytes->length = 1;
+ByteBuffer bytes_from_char(char character) {
+    ByteBuffer bytes = create_bytes(1);
+    bytes.bytes[0] = character;
+    return bytes;
 }
 
-void bytes_from_file(char file[], ByteBuffer *bytes) {
+ByteBuffer bytes_from_file(char *file) {
+    ByteBuffer bytes = create_bytes(1024);
     FILE *fp = fopen(file, "r");
     size_t i = 0;
     while(1) {
-        i = fread(&bytes->bytes[bytes->length], 1, 1024, fp);
-        bytes->length += i;
+        i = fread(&bytes.bytes[bytes.length], 1, 1024, fp);
+        bytes.length += i;
         if(i < 1024) break;
-        if(bytes->capacity<(bytes->length+1024)) {
-            resize_bytes(bytes);
+        if(bytes.capacity<(bytes.length+1024)) {
+            resize_bytes(&bytes);
         }
     };
     fclose(fp);
+    return bytes;
 }
 
-void bytes_copy_to(ByteBuffer *src, ByteBuffer *dest) {
-    assert(src->capacity == dest->capacity);
+void bytes_copy_to(ByteBuffer src, ByteBuffer *dest) {
+    assert(src.capacity == dest->capacity);
     memset(dest->bytes, 0, dest->capacity);
-    dest->length = src->length;
-    memcpy(dest->bytes, src->bytes, src->length);
+    dest->length = src.length;
+    memcpy(dest->bytes, src.bytes, src.length);
 }
 
-void hex_from_bytes(ByteBuffer *input, char *hex) {
-    for(int i=0; i<input->length; i++) {
-        sprintf(&hex[i*2], "%02x", (char)input->bytes[i]);
+char* hex_from_bytes(ByteBuffer input) {
+    char *hex = malloc(sizeof(char)*input.length+1);
+    int i;
+    for(i=0; i<input.length; i++) {
+        sprintf(&hex[i*2], "%02x", (char)input.bytes[i]);
     }
+    hex[i*2]=0;
+    return hex;
 }
 
-void xor_bytes(ByteBuffer *input, ByteBuffer *xor) {
+void xor_bytes(ByteBuffer *input, ByteBuffer xor) {
     for(int i=0; i<input->length; i++) {
-        input->bytes[i] = input->bytes[i]^xor->bytes[i%xor->length];
+        input->bytes[i] = xor.length>0
+            ? input->bytes[i]^xor.bytes[i%xor.length]
+            : input->bytes[i];
     }
 }
 
@@ -107,15 +115,13 @@ void xor_char(ByteBuffer *input, char cipher) {
 }
 
 void xor_str(ByteBuffer *input, char cipher[]) {
-    size_t len = strlen(cipher);
-    ByteBuffer cipher_bytes = create_bytes(len+1);
-    bytes_from_str(cipher, &cipher_bytes);
-    xor_bytes(input, &cipher_bytes);
+    ByteBuffer cipher_bytes = bytes_from_str(cipher);
+    xor_bytes(input, cipher_bytes);
     input->bytes[input->length] = 0;
-    free_bytes(&cipher_bytes);
 }
 
-void base64_encode_bytes(ByteBuffer *in, ByteBuffer *out) {
+ByteBuffer base64_encode_bytes(ByteBuffer *in) {
+    ByteBuffer out = create_bytes(1024);
     BIO *b64 = BIO_new(BIO_f_base64());
     BIO *mem = BIO_new(BIO_s_mem());
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -126,16 +132,19 @@ void base64_encode_bytes(ByteBuffer *in, ByteBuffer *out) {
     char *output;
     int outputlen = BIO_get_mem_data(mem, &output);
 
-    while(out->capacity<outputlen) {
-        resize_bytes(out);
+    while(out.capacity<outputlen) {
+        resize_bytes(&out);
     }
-    strncpy(out->bytes, output, outputlen);
-    out->length = outputlen;
+    strncpy(out.bytes, output, outputlen);
+    out.length = outputlen;
 
     BIO_free_all(mem);
+
+    return out;
 }
 
-void base64_decode_bytes(ByteBuffer *in, ByteBuffer *out) {
+ByteBuffer base64_decode_bytes(ByteBuffer *in) {
+    ByteBuffer out = create_bytes(1024);
     char tmp[in->length];
     // Strip all non-base64 characters
     int j=0;
@@ -156,16 +165,17 @@ void base64_decode_bytes(ByteBuffer *in, ByteBuffer *out) {
     bmem = BIO_push(b64, bmem);
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
 
-    out->length = BIO_read(bmem, out->bytes, j);
+    out.length = BIO_read(bmem, out.bytes, j);
 
     BIO_free_all(bmem);
+    return out;
 }
 
-float score_bytes(ByteBuffer *bytes) {
+float score_bytes(ByteBuffer bytes) {
     float score = 0;
     size_t i;
-    for(i=0; bytes->length; i++) {
-        char letter = bytes->bytes[i];
+    for(i=0; bytes.length; i++) {
+        char letter = bytes.bytes[i];
         if(letter == 0) break;
 
         if(letter == ' ') {
@@ -215,12 +225,12 @@ float score_bytes(ByteBuffer *bytes) {
         }
     }
 
-    return score / bytes->length;
+    return score / bytes.length;
 }
 
-CharCipher find_xor_char(ByteBuffer *bytes, int verbose) {
-    CharCipher highscore = { 0, 0 };
-    ByteBuffer tmp = create_bytes(bytes->capacity);
+CharCipher find_xor_char(ByteBuffer bytes, int verbose) {
+    CharCipher highscore = { -1, 0 };
+    ByteBuffer tmp = create_bytes(bytes.capacity);
 
     if(verbose == 1)
         printf("Finding xor char:\n");
@@ -228,7 +238,7 @@ CharCipher find_xor_char(ByteBuffer *bytes, int verbose) {
     for(int i=1; i<255; i++) {
         bytes_copy_to(bytes, &tmp);
         xor_char(&tmp, (char)i);
-        float s = score_bytes(&tmp);
+        float s = score_bytes(tmp);
         if(verbose)
             printf("  -> hex: %02x / %c, score: %f", i, (char)i, s);
         if(s>highscore.score) {
@@ -247,20 +257,20 @@ CharCipher find_xor_char(ByteBuffer *bytes, int verbose) {
     return highscore;
 }
 
-char* find_xor_key(ByteBuffer *bytes) {
+char* find_xor_key(ByteBuffer bytes) {
     int keysize = find_keysize(bytes, 0);
     char *out = malloc(sizeof(char)*keysize+1);
-    ByteBuffer segment = create_bytes(bytes->length/keysize+1);
+    ByteBuffer segment = create_bytes(bytes.length/keysize+1);
 
     for(int i=0; i<keysize; i++) {
         segment.length = 0;
         int j=i;
-        while(j<bytes->length) {
-            segment.bytes[segment.length++] = bytes->bytes[j];
+        while(j<bytes.length) {
+            segment.bytes[segment.length++] = bytes.bytes[j];
             j += keysize;
         }
 
-        CharCipher cipher = find_xor_char(&segment, 0);
+        CharCipher cipher = find_xor_char(segment, 0);
         out[i] = cipher.cipher;
     }
 
@@ -274,15 +284,15 @@ void hex_dump(char *bytes, int len) {
     printf("\n");
 }
 
-float hamming_distance_from_segments(ByteBuffer *in, int keysize, int num) {
+float hamming_distance_from_segments(ByteBuffer in, int keysize, int num) {
     float distance = 0;
     char segment_1[keysize+1];
     char segment_2[keysize+1];
     for(int i=0; i<num; i++) {
-        memcpy(&segment_1[0], &in->bytes[keysize*i], keysize);
+        memcpy(&segment_1[0], &in.bytes[keysize*i], keysize);
         segment_1[keysize] = '\0';
 
-        memcpy(&segment_2[0], &in->bytes[keysize*i+keysize], keysize);
+        memcpy(&segment_2[0], &in.bytes[keysize*i+keysize], keysize);
         segment_2[keysize] = '\0';
 
         distance += (float)hamming_distance(segment_1, keysize, segment_2, keysize)/keysize;
@@ -290,11 +300,11 @@ float hamming_distance_from_segments(ByteBuffer *in, int keysize, int num) {
     return distance / num;
 }
 
-int find_keysize(ByteBuffer *bytes, int verbose) {
+int find_keysize(ByteBuffer bytes, int verbose) {
     const int MIN_KEYSIZE = 2;
     const int MAX_KEYSIZE = 40;
 
-    assert(MAX_KEYSIZE*2 < bytes->length);
+    assert(MAX_KEYSIZE*2 < bytes.length);
 
     struct match {
         int keysize;

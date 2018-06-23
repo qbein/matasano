@@ -23,16 +23,14 @@ int main(int argc, char **argv) {
     char data_hex[] =
         "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
 
-    ByteBuffer data = create_bytes(1024);
-    bytes_from_hex(&data_hex[0], &data);
-
-    CharCipher cipher = find_xor_char(&data, 0);
+    ByteBuffer data = bytes_from_hex(&data_hex[0]);
+    CharCipher cipher = find_xor_char(data, 0);
 
     xor_char(&data, cipher.cipher);
 
     assert_equal(
-        data.bytes,
-        "Cooking MC's like a pound of bacon"
+        "Cooking MC's like a pound of bacon",
+        data.bytes
         );
 
     free_bytes(&data);
