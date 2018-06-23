@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <limits.h>
 #include "crypto.h"
-#include "ascii.h"
+#include "letterfreq.h"
 
 void* safe_malloc(size_t size) {
     void* buffer;
