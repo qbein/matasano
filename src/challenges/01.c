@@ -26,13 +26,13 @@ int main(int argc, char **argv) {
 
     ByteBuffer bytes = bytes_from_hex(&input[0]);
     printf("hex: %s\n", bytes.bytes);
-    ByteBuffer encoded = base64_encode_bytes(&bytes);
+    ByteBuffer encoded = base64_encode_bytes(bytes);
 
     bytes.length = 0;
     memset(bytes.bytes, 0, bytes.capacity);
 
     printf("encoded: ->%s<-\n", encoded.bytes);
-    ByteBuffer decoded = base64_decode_bytes(&encoded);
+    ByteBuffer decoded = base64_decode_bytes(encoded);
     printf("decoded: ->%s<-\n", decoded.bytes);
 
     assert_equal(

@@ -120,13 +120,13 @@ void xor_str(ByteBuffer *input, char cipher[]) {
     input->bytes[input->length] = 0;
 }
 
-ByteBuffer base64_encode_bytes(ByteBuffer *in) {
+ByteBuffer base64_encode_bytes(ByteBuffer in) {
     ByteBuffer out = create_bytes(1024);
     BIO *b64 = BIO_new(BIO_f_base64());
     BIO *mem = BIO_new(BIO_s_mem());
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     BIO_push(b64, mem);
-    BIO_write(b64, in->bytes, in->length);
+    BIO_write(b64, in.bytes, in.length);
     BIO_flush(b64);
 
     char *output;
@@ -143,19 +143,19 @@ ByteBuffer base64_encode_bytes(ByteBuffer *in) {
     return out;
 }
 
-ByteBuffer base64_decode_bytes(ByteBuffer *in) {
+ByteBuffer base64_decode_bytes(ByteBuffer in) {
     ByteBuffer out = create_bytes(1024);
-    char tmp[in->length];
+    char tmp[in.length];
     // Strip all non-base64 characters
     int j=0;
-    for(size_t i=0; i<in->length; i++) {
-        if((in->bytes[i] >= 'A' && in->bytes[i] <= 'Z')
-            || (in->bytes[i] >= 'a' && in->bytes[i] <= 'z')
-            || (in->bytes[i] >= '0' && in->bytes[i] <= '9')
-            || in->bytes[i] == '='
-            || in->bytes[i] == '+'
-            || in->bytes[i] == '/') {
-                tmp[j++] = in->bytes[i];
+    for(size_t i=0; i<in.length; i++) {
+        if((in.bytes[i] >= 'A' && in.bytes[i] <= 'Z')
+            || (in.bytes[i] >= 'a' && in.bytes[i] <= 'z')
+            || (in.bytes[i] >= '0' && in.bytes[i] <= '9')
+            || in.bytes[i] == '='
+            || in.bytes[i] == '+'
+            || in.bytes[i] == '/') {
+                tmp[j++] = in.bytes[i];
             }
     }
     tmp[j++] = '\0';
@@ -277,11 +277,32 @@ char* find_xor_key(ByteBuffer bytes) {
     return out;
 }
 
-void hex_dump(char *bytes, int len) {
-    for(int i=0; i<len; i++) {
+void hex_dump(unsigned char *bytes, int len) {
+    int i, j;
+    for(i=0; i<len; i++) {
+        if(i>0 && i%0x10==0) {
+            printf("\t");
+            for(j=i-0x10; j<=i; j++) {
+                // Do not print unprintable characters like newline etc.
+                if(bytes[j]<0x20) printf(" ");
+                else printf("%c", bytes[j]);
+            }
+            printf("\n");
+        }
         printf("%02x ", bytes[i]);
     }
-    printf("\n");
+    if(i%0x10!=0) {
+        for(j=i%0x10; j<0x10; j++) {
+            printf("   ");
+        }
+        printf("\t");
+        for(j=i-0x10; j<=i; j++) {
+            // Do not print unprintable characters like newline etc.
+            if(bytes[j]<0x20) printf(" ");
+            else printf("%c", bytes[j]);
+        }
+        printf("\n");
+    }
 }
 
 float hamming_distance_from_segments(ByteBuffer in, int keysize, int num) {

@@ -28,9 +28,9 @@ void bytes_copy_to(ByteBuffer src, ByteBuffer *dest);
 
 char* hex_from_bytes(ByteBuffer input);
 
-ByteBuffer base64_encode_bytes(ByteBuffer *bytes);
+ByteBuffer base64_encode_bytes(ByteBuffer bytes);
 
-ByteBuffer base64_decode_bytes(ByteBuffer *encoded);
+ByteBuffer base64_decode_bytes(ByteBuffer encoded);
 
 void xor_bytes(ByteBuffer *input, ByteBuffer xor);
 
@@ -55,3 +55,5 @@ CharCipher find_xor_char(ByteBuffer bytes, int verbose);
 char* find_xor_key(ByteBuffer bytes);
 
 int find_keysize(ByteBuffer bytes, int verbose);
+
+void hex_dump(unsigned char *bytes, int len);

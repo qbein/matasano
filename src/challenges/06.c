@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     assert(hamming_distance("this is a test", 14, "wokka wokka!!!", 14)==37);
 
     ByteBuffer encoded = bytes_from_file("assets/6.txt");
-    ByteBuffer bytes = base64_decode_bytes(&encoded);
+    ByteBuffer bytes = base64_decode_bytes(encoded);
 
     int keysize = find_keysize(bytes, 0);
     assert(keysize==29);
